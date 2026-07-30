@@ -7,40 +7,42 @@
 #include <memory>
 #include <string>
 
-namespace tsm {
+namespace tsm
+{
 
-std::shared_ptr<cpptui::Widget> build_root_view() {
-    auto system_content = std::make_shared<cpptui::Vertical>();
+std::shared_ptr<cpptui::Widget> BuildRootView()
+{
+    auto systemContent = std::make_shared<cpptui::Vertical>();
 
     cpptui::StyledText title;
-    title.bold(std::string(application_name()));
-    system_content->add(std::make_shared<cpptui::Label>(title));
-    system_content->add(std::make_shared<cpptui::Label>(
-        std::string(application_summary())));
-    system_content->add(std::make_shared<cpptui::VerticalSpacer>());
-    system_content->add(
-        std::make_shared<cpptui::Label>(std::string(quit_hint())));
+    title.bold(std::string(ApplicationName()));
+    systemContent->add(std::make_shared<cpptui::Label>(title));
+    systemContent->add(std::make_shared<cpptui::Label>(
+                std::string(ApplicationSummary())));
+    systemContent->add(std::make_shared<cpptui::VerticalSpacer>());
+    systemContent->add(
+            std::make_shared<cpptui::Label>(std::string(QuitHint())));
 
-    auto system_tab = std::make_shared<cpptui::Border>(
-        cpptui::BorderStyle::Rounded);
-    system_tab->set_title("System statistics");
-    system_tab->add(system_content);
+    auto systemTab = std::make_shared<cpptui::Border>(
+            cpptui::BorderStyle::Rounded);
+    systemTab->set_title("System statistics");
+    systemTab->add(systemContent);
 
-    auto process_content = std::make_shared<cpptui::Vertical>();
-    process_content->add(std::make_shared<cpptui::Label>(
-        "Process list will be added in a later stage"));
-    process_content->add(std::make_shared<cpptui::VerticalSpacer>());
-    process_content->add(
-        std::make_shared<cpptui::Label>(std::string(quit_hint())));
+    auto processContent = std::make_shared<cpptui::Vertical>();
+    processContent->add(std::make_shared<cpptui::Label>(
+                "Process list will be added in a later stage"));
+    processContent->add(std::make_shared<cpptui::VerticalSpacer>());
+    processContent->add(
+            std::make_shared<cpptui::Label>(std::string(QuitHint())));
 
-    auto process_tab = std::make_shared<cpptui::Border>(
-        cpptui::BorderStyle::Rounded);
-    process_tab->set_title("Processes");
-    process_tab->add(process_content);
+    auto processTab = std::make_shared<cpptui::Border>(
+            cpptui::BorderStyle::Rounded);
+    processTab->set_title("Processes");
+    processTab->add(processContent);
 
     auto tabs = std::make_shared<cpptui::Tabs>();
-    tabs->add_tab("System", system_tab);
-    tabs->add_tab("Processes", process_tab);
+    tabs->add_tab("System", systemTab);
+    tabs->add_tab("Processes", processTab);
     return tabs;
 }
 

@@ -4,8 +4,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("The root view can be laid out and rendered") {
-    auto root = tsm::build_root_view();
+TEST_CASE("The root view can be laid out and rendered")
+{
+    auto root = tsm::BuildRootView();
     REQUIRE(root);
 
     auto tabs = std::dynamic_pointer_cast<cpptui::Tabs>(root);
@@ -26,9 +27,10 @@ TEST_CASE("The root view can be laid out and rendered") {
     CHECK_NOTHROW(root->render(buffer));
 }
 
-TEST_CASE("The top tabs switch between system and processes") {
+TEST_CASE("The top tabs switch between system and processes")
+{
     auto tabs =
-        std::dynamic_pointer_cast<cpptui::Tabs>(tsm::build_root_view());
+        std::dynamic_pointer_cast<cpptui::Tabs>(tsm::BuildRootView());
     REQUIRE(tabs);
 
     cpptui::Event next;

@@ -8,60 +8,65 @@
 #include <limits>
 #include <string>
 
-namespace {
+namespace
+{
 
-tsm::CpuSample load_sample(const std::string& name) {
+tsm::CpuSample LoadSample(const std::string& name)
+{
     std::ifstream input(
-        std::string(TSM_TEST_FIXTURE_DIR) + "/proc_stat/" + name);
+            std::string(TsmTestFixtureDir) + "/proc_stat/" + name);
     REQUIRE(input);
 
-    auto parsed = tsm::ProcStatParser{}.parse(input);
+    auto parsed = tsm::ProcStatParser{}.Parse(input);
     REQUIRE(parsed);
-    return parsed.value();
+    return parsed.Value();
 }
 
 }  // namespace
 
-TEST_CASE("CPU usage is calculated from two consecutive samples") {
-    const auto previous = load_sample("sample_a.txt");
-    const auto current = load_sample("sample_b.txt");
+TEST_CASE("CPU usage is calculated from two consecutive samples")
+{
+    const auto previous = LoadSample("sample_a.txt");
+    const auto current = LoadSample("sample_b.txt");
 
     const auto result =
-        tsm::CpuUsageCalculator{}.calculate(previous, current);
+        tsm::CpuUsageCalculator{}.Calculate(previous, current);
     REQUIRE(result);
-    REQUIRE(result.value().aggregate_percent);
-    CHECK(*result.value().aggregate_percent ==
-          Catch::Approx(56.25));
-    REQUIRE(result.value().core_percentages.size() == 2);
-    REQUIRE(result.value().core_percentages[0]);
-    CHECK(*result.value().core_percentages[0] ==
-          Catch::Approx(56.25));
+    REQUIRE(result.Value().aggregatePercent);
+    CHECK(*result.Value().aggregatePercent ==
+            Catch::Approx(56.25));
+    REQUIRE(result.Value().corePercentages.size() == 2);
+    REQUIRE(result.Value().corePercentages[0]);
+    CHECK(*result.Value().corePercentages[0] ==
+            Catch::Approx(56.25));
 }
 
-TEST_CASE("A newly appeared CPU core has unknown usage") {
-    auto previous = load_sample("sample_a.txt");
-    auto current = load_sample("sample_b.txt");
+TEST_CASE("A newly appeared CPU core has unknown usage")
+{
+    auto previous = LoadSample("sample_a.txt");
+    auto current = LoadSample("sample_b.txt");
     current.cores.push_back({"cpu2", {1, 0, 0, 10, 0, 0, 0, 0}});
 
     const auto result =
-        tsm::CpuUsageCalculator{}.calculate(previous, current);
+        tsm::CpuUsageCalculator{}.Calculate(previous, current);
     REQUIRE(result);
-    REQUIRE(result.value().core_percentages.size() == 3);
-    CHECK_FALSE(result.value().core_percentages[2]);
+    REQUIRE(result.Value().corePercentages.size() == 3);
+    CHECK_FALSE(result.Value().corePercentages[2]);
 }
 
-TEST_CASE("Zero, reset, and overflowing aggregate counters are rejected") {
-    const auto sample = load_sample("sample_a.txt");
-    CHECK_FALSE(tsm::CpuUsageCalculator{}.calculate(sample, sample));
+TEST_CASE("Zero, reset, and overflowing aggregate counters are rejected")
+{
+    const auto sample = LoadSample("sample_a.txt");
+    CHECK_FALSE(tsm::CpuUsageCalculator{}.Calculate(sample, sample));
 
-    auto reset = load_sample("sample_b.txt");
+    auto reset = LoadSample("sample_b.txt");
     reset.aggregate.user = 1;
     reset.aggregate.idle = 1;
-    CHECK_FALSE(tsm::CpuUsageCalculator{}.calculate(sample, reset));
+    CHECK_FALSE(tsm::CpuUsageCalculator{}.Calculate(sample, reset));
 
-    auto overflowing = load_sample("sample_b.txt");
+    auto overflowing = LoadSample("sample_b.txt");
     overflowing.aggregate.user =
         std::numeric_limits<std::uint64_t>::max();
     CHECK_FALSE(
-        tsm::CpuUsageCalculator{}.calculate(sample, overflowing));
+            tsm::CpuUsageCalculator{}.Calculate(sample, overflowing));
 }

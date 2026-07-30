@@ -3,14 +3,20 @@
 #include <exception>
 #include <iostream>
 
-int main() {
-    try {
+int main()
+{
+    try
+    {
         tsm::Application application;
-        return application.run();
-    } catch (const std::exception& error) {
+        return application.Run();
+    }
+    catch (const std::exception& error)
+    {
         std::cerr << "tsm: " << error.what() << '\n';
-    } catch (...) {
-        std::cerr << "tsm: unknown fatal error\n";
+    }
+    catch (...)
+    {
+        std::cerr << "tsm: Unknown fatal error\n";
     }
 
     return 1;

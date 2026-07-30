@@ -4,12 +4,14 @@
 
 #include <cpptui.hpp>
 
-namespace tsm {
+namespace tsm
+{
 
-int Application::run() {
+int Application::Run()
+{
     cpptui::App app;
     app.register_exit_key('q');
-    app.run(build_root_view());
+    app.run(BuildRootView());
     return 0;
 }
 

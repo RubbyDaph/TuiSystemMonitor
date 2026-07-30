@@ -1,0 +1,4 @@
+MemTotal:       not-a-number kB
+MemAvailable:  1000 kB
+SwapTotal:     0 kB
+SwapFree:      0 kB

@@ -1,10 +1,12 @@
 #pragma once
 
-namespace tsm {
+namespace tsm
+{
 
-class Application {
+class Application
+{
 public:
-    int run();
+    int Run();
 };
 
 }  // namespace tsm

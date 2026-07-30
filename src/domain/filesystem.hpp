@@ -3,21 +3,24 @@
 #include <cstdint>
 #include <string>
 
-namespace tsm {
+namespace tsm
+{
 
-struct MountInfo {
+struct MountInfo
+{
     std::string source;
-    std::string mount_point;
-    std::string filesystem_type;
+    std::string mountPoint;
+    std::string filesystemType;
 };
 
-struct FilesystemUsage {
+struct FilesystemUsage
+{
     MountInfo mount;
-    std::uint64_t total_bytes{};
-    std::uint64_t used_bytes{};
-    std::uint64_t available_bytes{};
-    double used_percent{};
-    bool read_only{};
+    std::uint64_t totalBytes{};
+    std::uint64_t usedBytes{};
+    std::uint64_t availableBytes{};
+    double usedPercent{};
+    bool readOnly{};
 };
 
 }  // namespace tsm

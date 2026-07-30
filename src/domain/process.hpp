@@ -4,56 +4,63 @@
 #include <optional>
 #include <string>
 
-namespace tsm {
+namespace tsm
+{
 
 using ProcessId = int;
 
-struct ProcessIdentity {
+struct ProcessIdentity
+{
     ProcessId pid{};
-    std::uint64_t start_time_ticks{};
+    std::uint64_t startTimeTicks{};
 };
 
 inline bool operator==(const ProcessIdentity& left,
-                       const ProcessIdentity& right) noexcept {
+        const ProcessIdentity& right) noexcept
+{
     return left.pid == right.pid &&
-           left.start_time_ticks == right.start_time_ticks;
+        left.startTimeTicks == right.startTimeTicks;
 }
 
 inline bool operator!=(const ProcessIdentity& left,
-                       const ProcessIdentity& right) noexcept {
+        const ProcessIdentity& right) noexcept
+{
     return !(left == right);
 }
 
-enum class ProcessState {
-    running,
-    sleeping,
-    disk_sleep,
-    stopped,
-    tracing_stop,
-    zombie,
-    dead,
-    parked,
-    idle,
-    unknown,
+enum class ProcessState
+{
+    Running,
+    Sleeping,
+    DiskSleep,
+    Stopped,
+    TracingStop,
+    Zombie,
+    Dead,
+    Parked,
+    Idle,
+    Unknown,
 };
 
-struct ProcessRawSample {
+struct ProcessRawSample
+{
     ProcessIdentity identity;
     std::string name;
-    std::uint32_t effective_uid{};
-    ProcessState state{ProcessState::unknown};
-    std::uint64_t user_ticks{};
-    std::uint64_t system_ticks{};
-    std::uint64_t resident_memory_bytes{};
+    std::uint32_t effectiveUid{};
+    ProcessState state{ProcessState::Unknown};
+    std::uint64_t userTicks{};
+    std::uint64_t systemTicks{};
+    std::uint64_t residentMemoryBytes{};
 };
 
-struct ProcessInfo {
+struct ProcessInfo
+{
     ProcessIdentity identity;
     std::string name;
     std::string user;
-    ProcessState state{ProcessState::unknown};
-    std::optional<double> cpu_percent;
-    std::uint64_t resident_memory_bytes{};
+    ProcessState state{ProcessState::Unknown};
+    std::optional<double> cpuPercent;
+    std::uint64_t residentMemoryBytes{};
 };
 
 }  // namespace tsm

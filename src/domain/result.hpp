@@ -6,67 +6,81 @@
 #include <utility>
 #include <variant>
 
-namespace tsm {
+namespace tsm
+{
 
-enum class ErrorKind {
-    io,
-    parse,
-    permission_denied,
-    disappeared,
-    invalid_data,
-    system_call,
+enum class ErrorKind
+{
+    Io,
+    Parse,
+    PermissionDenied,
+    Disappeared,
+    InvalidData,
+    SystemCall,
 };
 
-struct Error {
-    ErrorKind kind{ErrorKind::invalid_data};
+struct Error
+{
+    ErrorKind kind{ErrorKind::InvalidData};
     std::string context;
     std::error_code code;
     std::string message;
 };
 
 template <typename T>
-class Result {
+class Result
+{
 public:
-    static Result success(T value) {
+    static Result Success(T value)
+    {
         return Result(std::move(value));
     }
 
-    static Result failure(Error error) {
+    static Result Failure(Error error)
+    {
         return Result(std::move(error));
     }
 
-    bool has_value() const noexcept {
-        return std::holds_alternative<T>(storage_);
+    bool HasValue() const noexcept
+    {
+        return std::holds_alternative<T>(storage);
     }
 
-    explicit operator bool() const noexcept {
-        return has_value();
+    explicit operator bool() const noexcept
+    {
+        return HasValue();
     }
 
-    T& value() {
-        return std::get<T>(storage_);
+    T& Value()
+    {
+        return std::get<T>(storage);
     }
 
-    const T& value() const {
-        return std::get<T>(storage_);
+    const T& Value() const
+    {
+        return std::get<T>(storage);
     }
 
-    Error& error() {
-        return std::get<Error>(storage_);
+    Error& GetError()
+    {
+        return std::get<Error>(storage);
     }
 
-    const Error& error() const {
-        return std::get<Error>(storage_);
+    const Error& GetError() const
+    {
+        return std::get<Error>(storage);
     }
 
 private:
     explicit Result(T value)
-        : storage_(std::move(value)) {}
+        : storage(std::move(value))
+    {}
 
     explicit Result(Error error)
-        : storage_(std::move(error)) {}
+        : storage(std::move(error))
+    {}
 
-    std::variant<T, Error> storage_;
+    std::variant<T, Error> storage;
 };
 
 }  // namespace tsm

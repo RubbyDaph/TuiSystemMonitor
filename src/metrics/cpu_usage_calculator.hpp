@@ -3,12 +3,14 @@
 #include "domain/cpu.hpp"
 #include "domain/result.hpp"
 
-namespace tsm {
+namespace tsm
+{
 
-class CpuUsageCalculator {
+class CpuUsageCalculator
+{
 public:
-    Result<CpuUsage> calculate(const CpuSample& previous,
-                               const CpuSample& current) const;
+    Result<CpuUsage> Calculate(const CpuSample& previous,
+            const CpuSample& current) const;
 };
 
 }  // namespace tsm

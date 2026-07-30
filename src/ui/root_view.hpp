@@ -2,12 +2,14 @@
 
 #include <memory>
 
-namespace cpptui {
+namespace cpptui
+{
 class Widget;
 }
 
-namespace tsm {
+namespace tsm
+{
 
-std::shared_ptr<cpptui::Widget> build_root_view();
+std::shared_ptr<cpptui::Widget> BuildRootView();
 
 }  // namespace tsm

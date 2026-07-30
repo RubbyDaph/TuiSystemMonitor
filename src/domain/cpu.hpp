@@ -5,32 +5,37 @@
 #include <string>
 #include <vector>
 
-namespace tsm {
+namespace tsm
+{
 
-struct CpuTimes {
+struct CpuTimes
+{
     std::uint64_t user{};
     std::uint64_t nice{};
     std::uint64_t system{};
     std::uint64_t idle{};
-    std::uint64_t io_wait{};
+    std::uint64_t ioWait{};
     std::uint64_t irq{};
-    std::uint64_t soft_irq{};
+    std::uint64_t softIrq{};
     std::uint64_t steal{};
 };
 
-struct CpuCoreSample {
+struct CpuCoreSample
+{
     std::string name;
     CpuTimes times;
 };
 
-struct CpuSample {
+struct CpuSample
+{
     CpuTimes aggregate;
     std::vector<CpuCoreSample> cores;
 };
 
-struct CpuUsage {
-    std::optional<double> aggregate_percent;
-    std::vector<std::optional<double>> core_percentages;
+struct CpuUsage
+{
+    std::optional<double> aggregatePercent;
+    std::vector<std::optional<double>> corePercentages;
 };
 
 }  // namespace tsm
