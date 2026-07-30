@@ -1,0 +1,5 @@
+36 25 8:1 / / rw,relatime shared:1 - ext4 /dev/sda1 rw
+37 36 0:5 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+38 36 0:6 / /run rw,nosuid,nodev - tmpfs tmpfs rw,size=1024k
+39 36 8:2 / /media/My\040Disk rw,nosuid,nodev - ext4 /dev/sda2 rw
+40 36 0:42 / /srv/data ro,relatime - nfs4 server:/exports/data ro
