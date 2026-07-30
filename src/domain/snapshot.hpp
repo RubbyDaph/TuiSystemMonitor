@@ -32,6 +32,8 @@ struct ProcessSnapshot
 {
     std::vector<ProcessInfo> processes;
     std::vector<Error> errors;
+    bool available{true};
+    bool stale{};
 };
 
 struct ApplicationSnapshot

@@ -31,6 +31,7 @@ struct FilesystemCollection
 {
     std::vector<FilesystemUsage> filesystems;
     std::vector<Error> errors;
+    bool available{true};
 };
 
 }  // namespace tsm

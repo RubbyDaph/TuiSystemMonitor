@@ -53,6 +53,7 @@ FilesystemCollection FilesystemCollector::Collect(
     if (!parsed)
     {
         collection.errors.push_back(parsed.GetError());
+        collection.available = false;
         return collection;
     }
 

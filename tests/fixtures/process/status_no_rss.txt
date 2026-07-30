@@ -1,0 +1,4 @@
+Name:	kworker
+State:	I (idle)
+Tgid:	42
+Uid:	0	0	0	0
