@@ -1,6 +1,7 @@
 #include "ui/root_view.hpp"
 
 #include "app/app_info.hpp"
+#include "ui/system_tab.hpp"
 
 #include <cpptui.hpp>
 
@@ -10,18 +11,14 @@
 namespace tsm
 {
 
-std::shared_ptr<cpptui::Widget> BuildRootView()
+std::shared_ptr<cpptui::Widget> BuildRootView(const AppState& state)
 {
-    auto systemContent = std::make_shared<cpptui::Vertical>();
+    return BuildRootView(std::make_shared<SystemTab>(state));
+}
 
-    cpptui::StyledText title;
-    title.bold(std::string(ApplicationName()));
-    systemContent->add(std::make_shared<cpptui::Label>(title));
-    systemContent->add(std::make_shared<cpptui::Label>(
-                std::string(ApplicationSummary())));
-    systemContent->add(std::make_shared<cpptui::VerticalSpacer>());
-    systemContent->add(
-            std::make_shared<cpptui::Label>(std::string(QuitHint())));
+std::shared_ptr<cpptui::Widget> BuildRootView(
+    const std::shared_ptr<SystemTab>& systemContent)
+{
 
     auto systemTab = std::make_shared<cpptui::Border>(
             cpptui::BorderStyle::Rounded);

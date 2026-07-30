@@ -35,7 +35,7 @@ bool HasErrors(const ApplicationSnapshot& snapshot)
     return !snapshot.system.cpu.errors.empty() ||
            !snapshot.system.memory.errors.empty() ||
            !snapshot.system.filesystems.errors.empty() ||
-           !snapshot.processes.errors.empty();
+           !snapshot.processes.available;
 }
 
 }  // namespace

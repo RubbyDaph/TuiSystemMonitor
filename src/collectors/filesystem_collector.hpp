@@ -12,7 +12,7 @@ namespace tsm
 class FilesystemFilter
 {
 public:
-    bool ShouldInclude(std::string_view filesystemType) const;
+    bool ShouldInclude(const MountInfo& mount) const;
 };
 
 class FilesystemCollector

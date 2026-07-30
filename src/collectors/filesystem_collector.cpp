@@ -9,8 +9,7 @@
 namespace tsm
 {
 
-bool FilesystemFilter::ShouldInclude(
-    std::string_view filesystemType) const
+bool FilesystemFilter::ShouldInclude(const MountInfo& mount) const
 {
     static constexpr std::array<std::string_view, 19> excluded{
         "proc",
@@ -35,8 +34,11 @@ bool FilesystemFilter::ShouldInclude(
     };
 
     return std::find(
-               excluded.begin(), excluded.end(), filesystemType) ==
-           excluded.end();
+               excluded.begin(),
+               excluded.end(),
+               mount.filesystemType) == excluded.end() &&
+           mount.source.rfind("/dev/", 0) == 0 &&
+           mount.source.rfind("/dev/loop", 0) != 0;
 }
 
 FilesystemCollector::FilesystemCollector(
@@ -59,7 +61,7 @@ FilesystemCollection FilesystemCollector::Collect(
 
     for (const auto& mount : parsed.Value())
     {
-        if (!filter.ShouldInclude(mount.filesystemType))
+        if (!filter.ShouldInclude(mount))
         {
             continue;
         }

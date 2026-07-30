@@ -1,3 +1,4 @@
+#include "app/app_state.hpp"
 #include "ui/root_view.hpp"
 
 #include <cpptui.hpp>
@@ -6,7 +7,8 @@
 
 TEST_CASE("The root view can be laid out and rendered")
 {
-    auto root = tsm::BuildRootView();
+    const tsm::AppState state;
+    auto root = tsm::BuildRootView(state);
     REQUIRE(root);
 
     auto tabs = std::dynamic_pointer_cast<cpptui::Tabs>(root);
@@ -29,8 +31,10 @@ TEST_CASE("The root view can be laid out and rendered")
 
 TEST_CASE("The top tabs switch between system and processes")
 {
+    const tsm::AppState state;
     auto tabs =
-        std::dynamic_pointer_cast<cpptui::Tabs>(tsm::BuildRootView());
+        std::dynamic_pointer_cast<cpptui::Tabs>(
+            tsm::BuildRootView(state));
     REQUIRE(tabs);
 
     cpptui::Event next;

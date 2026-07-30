@@ -106,7 +106,7 @@ TEST_CASE("Filesystem usage rejects invalid and overflowing counters")
         false));
 }
 
-TEST_CASE("FilesystemCollector filters pseudo filesystems and keeps errors")
+TEST_CASE("FilesystemCollector keeps physical storage only")
 {
     auto input = MountFixture("sample.txt");
     REQUIRE(input);
@@ -119,8 +119,7 @@ TEST_CASE("FilesystemCollector filters pseudo filesystems and keeps errors")
     CHECK(collection.filesystems[0].mount.mountPoint == "/");
     CHECK(collection.filesystems[1].mount.mountPoint ==
           "/media/My Disk");
-    REQUIRE(collection.errors.size() == 1);
-    CHECK(collection.errors[0].context == "/srv/data");
+    CHECK(collection.errors.empty());
 }
 
 TEST_CASE("The running Linux mount table exposes usable storage",
