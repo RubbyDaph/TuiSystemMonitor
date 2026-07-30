@@ -42,6 +42,16 @@ target_include_directories(
 target_compile_features(tsm_domain INTERFACE cxx_std_17)
 
 add_library(
+    tsm_core
+    STATIC
+        src/metrics/cpu_usage_calculator.cpp
+        src/parsers/proc_stat_parser.cpp
+)
+
+target_link_libraries(tsm_core PUBLIC tsm_domain)
+tsm_configure_target(tsm_core)
+
+add_library(
     tsm_app
     STATIC
         src/app/app_info.cpp
@@ -61,7 +71,7 @@ target_include_directories(
         "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty"
 )
 
-target_link_libraries(tsm_app PUBLIC Threads::Threads tsm_domain)
+target_link_libraries(tsm_app PUBLIC Threads::Threads tsm_core)
 tsm_configure_target(tsm_app)
 
 add_executable(tsm src/main.cpp)
