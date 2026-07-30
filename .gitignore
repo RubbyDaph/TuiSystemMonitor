@@ -1,0 +1,54 @@
+# CMake build trees
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+
+# CMake and CTest generated files
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Testing/
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+Makefile
+build.ninja
+.ninja_deps
+.ninja_log
+
+# Compilers and linkers
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.d
+tsm
+
+# Coverage, profiling, and sanitizer output
+*.gcda
+*.gcno
+*.gcov
+coverage/
+profraw/
+*.profraw
+*.profdata
+
+# Editor and language-server state
+/.cache/
+/.clangd/
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# Operating-system files
+.DS_Store
+Thumbs.db
