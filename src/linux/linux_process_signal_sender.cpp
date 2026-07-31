@@ -8,13 +8,9 @@ namespace tsm
 {
 
 std::error_code LinuxProcessSignalSender::Send(
-    ProcessId pid,
-    ProcessSignal signal) const
+    ProcessId pid) const
 {
-    const int nativeSignal =
-        signal == ProcessSignal::Terminate ? SIGTERM : SIGKILL;
-
-    if (::kill(pid, nativeSignal) == 0)
+    if (::kill(pid, SIGTERM) == 0)
     {
         return {};
     }

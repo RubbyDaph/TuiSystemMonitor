@@ -22,9 +22,7 @@ public:
         cpptui::App& app,
         ConfirmCallback onConfirm);
 
-    void Open(
-        const ProcessInfo& process,
-        ProcessSignal signal);
+    void Open(const ProcessInfo& process);
     void Confirm();
     void Cancel();
 
@@ -36,8 +34,6 @@ public:
     bool on_event(const cpptui::Event& event) override;
 
 private:
-    std::string SignalName(ProcessSignal signal) const;
-
     ConfirmCallback onConfirm;
     std::optional<ProcessSignalRequest> request;
     std::shared_ptr<cpptui::Label> promptLabel;

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 namespace tsm
 {
@@ -34,13 +35,21 @@ ProcessTab::ProcessTab(AppState& state)
       statusLabel(std::make_shared<cpptui::Label>("Waiting for data")),
       actionLabel(std::make_shared<cpptui::Label>(
           "No process action yet")),
+      terminateButton(std::make_shared<cpptui::Button>(
+          "Terminate selected",
+          [this]()
+          {
+              TerminateSelected();
+          })),
       processTable(std::make_shared<ProcessTable>())
 {
     statusLabel->fixed_height = 1;
     actionLabel->fixed_height = 1;
+    terminateButton->fixed_height = 1;
+    terminateButton->fixed_width = 24;
     processTable->columns = {
-        "PID", "Name", "User", "CPU", "RAM", "State"};
-    processTable->col_widths = {8, 24, 16, 10, 12, 12};
+        "Name", "User", "CPU", "RAM", "State"};
+    processTable->col_widths = {28, 16, 10, 12, 12};
     processTable->on_change =
         [this](int index)
         {
@@ -49,6 +58,7 @@ ProcessTab::ProcessTab(AppState& state)
 
     add(statusLabel);
     add(actionLabel);
+    add(terminateButton);
     add(processTable);
     Update();
 }
@@ -73,8 +83,8 @@ void ProcessTab::Update()
     if (!state.Snapshot())
     {
         statusLabel->set_text(
-            "Waiting for data | r: refresh | p/c/m: sort | "
-            "t: terminate | k: kill");
+            "Waiting for data | r: refresh | n/c/m: sort | "
+            "t: terminate");
         processTable->selected_index = 0;
         processTable->scroll_offset = 0;
         return;
@@ -84,8 +94,7 @@ void ProcessTab::Update()
     for (const auto& process : processes.processes)
     {
         processTable->add_row(
-            {std::to_string(process.identity.pid),
-             process.name,
+            {process.name,
              process.user,
              FormatPercent(process.cpuPercent),
              FormatBytes(process.residentMemoryBytes),
@@ -104,7 +113,7 @@ void ProcessTab::Update()
 
     statusLabel->set_text(
         availability + " | Sort: " + SortName() +
-        " | r: refresh | p/c/m: sort | t: terminate | k: kill");
+        " | r: refresh | n/c/m: sort | t: terminate");
 
     if (processes.processes.empty())
     {
@@ -145,6 +154,20 @@ void ProcessTab::SelectRow(std::size_t index)
     processTable->selected_index = static_cast<int>(index);
     processTable->scroll_to_selection();
     ApplyTableSelection(static_cast<int>(index));
+}
+
+void ProcessTab::SetTerminateAction(
+    std::function<void()> action)
+{
+    terminateAction = std::move(action);
+}
+
+void ProcessTab::TerminateSelected()
+{
+    if (terminateAction)
+    {
+        terminateAction();
+    }
 }
 
 std::size_t ProcessTab::RowCount() const
@@ -192,8 +215,8 @@ std::string ProcessTab::SortName() const
 {
     switch (state.SortKey())
     {
-        case ProcessSortKey::Pid:
-            return "PID";
+        case ProcessSortKey::Name:
+            return "Name";
         case ProcessSortKey::Cpu:
             return "CPU";
         case ProcessSortKey::Memory:

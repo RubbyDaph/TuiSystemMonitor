@@ -35,9 +35,7 @@ TEST_CASE("ProcessSignalDialog shows the selected target")
             confirmed.push_back(request);
         });
 
-    dialog->Open(
-        MakeDialogProcess(),
-        tsm::ProcessSignal::Terminate);
+    dialog->Open(MakeDialogProcess());
 
     CHECK(dialog->IsOpen());
     CHECK(dialog->modal);
@@ -45,37 +43,11 @@ TEST_CASE("ProcessSignalDialog shows the selected target")
     CHECK(dialog->Request()->identity ==
           tsm::ProcessIdentity{123, 456});
     CHECK(dialog->Request()->name == "worker");
-    CHECK(dialog->Request()->signal ==
-          tsm::ProcessSignal::Terminate);
-    CHECK(dialog->PromptText().find("SIGTERM") !=
+    CHECK(dialog->PromptText().find("Terminate") !=
           std::string::npos);
     CHECK(dialog->WarningText().find("graceful") !=
           std::string::npos);
     CHECK(confirmed.empty());
-
-    dialog->Cancel();
-}
-
-TEST_CASE("ProcessSignalDialog distinguishes SIGKILL")
-{
-    cpptui::App app;
-    auto dialog = std::make_shared<tsm::ProcessSignalDialog>(
-        app,
-        [](const tsm::ProcessSignalRequest&)
-        {
-        });
-
-    dialog->Open(
-        MakeDialogProcess(),
-        tsm::ProcessSignal::Kill);
-
-    REQUIRE(dialog->Request());
-    CHECK(dialog->Request()->signal ==
-          tsm::ProcessSignal::Kill);
-    CHECK(dialog->PromptText().find("SIGKILL") !=
-          std::string::npos);
-    CHECK(dialog->WarningText().find("cannot be handled") !=
-          std::string::npos);
 
     dialog->Cancel();
 }
@@ -91,18 +63,14 @@ TEST_CASE("ProcessSignalDialog cancellation sends nothing")
             ++confirmCount;
         });
 
-    dialog->Open(
-        MakeDialogProcess(),
-        tsm::ProcessSignal::Terminate);
+    dialog->Open(MakeDialogProcess());
     dialog->Cancel();
 
     CHECK_FALSE(dialog->IsOpen());
     CHECK_FALSE(dialog->Request());
     CHECK(confirmCount == 0);
 
-    dialog->Open(
-        MakeDialogProcess(),
-        tsm::ProcessSignal::Terminate);
+    dialog->Open(MakeDialogProcess());
     cpptui::Event escape;
     escape.type = cpptui::EventType::Key;
     escape.key = 27;
@@ -111,9 +79,7 @@ TEST_CASE("ProcessSignalDialog cancellation sends nothing")
     CHECK_FALSE(dialog->Request());
     CHECK(confirmCount == 0);
 
-    dialog->Open(
-        MakeDialogProcess(),
-        tsm::ProcessSignal::Terminate);
+    dialog->Open(MakeDialogProcess());
     cpptui::Event quit;
     quit.type = cpptui::EventType::Key;
     quit.key = 'q';
@@ -134,7 +100,7 @@ TEST_CASE("ProcessSignalDialog confirms its captured target once")
         });
     auto process = MakeDialogProcess();
 
-    dialog->Open(process, tsm::ProcessSignal::Terminate);
+    dialog->Open(process);
     process.identity = {999, 888};
     process.name = "changed";
     dialog->Confirm();

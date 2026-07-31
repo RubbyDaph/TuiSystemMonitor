@@ -64,8 +64,7 @@ class ActionSignalSender final : public tsm::ProcessSignalSender
 {
 public:
     std::error_code Send(
-        tsm::ProcessId,
-        tsm::ProcessSignal) const override
+        tsm::ProcessId) const override
     {
         ++sendCount;
         return error;
@@ -81,8 +80,7 @@ TEST_CASE("ProcessActionController stores successful actions")
 {
     const tsm::ProcessSignalRequest request{
         {123, 456},
-        "worker",
-        tsm::ProcessSignal::Terminate};
+        "worker"};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -97,31 +95,7 @@ TEST_CASE("ProcessActionController stores successful actions")
     REQUIRE(state.ProcessStatus());
     CHECK(state.ProcessStatus()->success);
     CHECK(state.ProcessStatus()->message ==
-          "SIGTERM sent to PID 123 (worker)");
-    CHECK(signalSender.sendCount == 1);
-}
-
-TEST_CASE("ProcessActionController reports explicit SIGKILL")
-{
-    const tsm::ProcessSignalRequest request{
-        {123, 456},
-        "worker",
-        tsm::ProcessSignal::Kill};
-    ActionProcSource procSource(
-        tsm::Result<std::string>::Success(
-            MakeActionStat(123, 456)));
-    ActionSignalSender signalSender;
-    const tsm::ProcessControl processControl(
-        procSource, signalSender, 999);
-    tsm::AppState state;
-    tsm::ProcessActionController controller(
-        state, processControl);
-
-    CHECK(controller.Execute(request));
-    REQUIRE(state.ProcessStatus());
-    CHECK(state.ProcessStatus()->success);
-    CHECK(state.ProcessStatus()->message.find("SIGKILL") !=
-          std::string::npos);
+          "Termination requested for worker");
     CHECK(signalSender.sendCount == 1);
 }
 
@@ -129,8 +103,7 @@ TEST_CASE("ProcessActionController formats process errors")
 {
     const tsm::ProcessSignalRequest request{
         {123, 456},
-        "worker",
-        tsm::ProcessSignal::Terminate};
+        "worker"};
 
     const auto checkProcError =
         [&request](
@@ -158,8 +131,8 @@ TEST_CASE("ProcessActionController formats process errors")
             CHECK(signalSender.sendCount == 0);
         };
 
-    checkProcError(tsm::ErrorKind::Disappeared, "no longer exists");
-    checkProcError(tsm::ErrorKind::Io, "Failed to send SIGTERM");
+    checkProcError(tsm::ErrorKind::Disappeared, "no longer running");
+    checkProcError(tsm::ErrorKind::Io, "Failed to terminate");
 
     ActionProcSource malformed(
         tsm::Result<std::string>::Success("malformed"));
@@ -172,7 +145,7 @@ TEST_CASE("ProcessActionController formats process errors")
     CHECK_FALSE(malformedController.Execute(request));
     REQUIRE(malformedState.ProcessStatus());
     CHECK(malformedState.ProcessStatus()->message.find(
-              "Failed to send SIGTERM") != std::string::npos);
+              "Failed to terminate") != std::string::npos);
 
     ActionProcSource reused(
         tsm::Result<std::string>::Success(
@@ -186,15 +159,14 @@ TEST_CASE("ProcessActionController formats process errors")
     CHECK_FALSE(reusedController.Execute(request));
     REQUIRE(reusedState.ProcessStatus());
     CHECK(reusedState.ProcessStatus()->message.find(
-              "another process") != std::string::npos);
+              "has changed") != std::string::npos);
 }
 
 TEST_CASE("ProcessActionController formats permission and self errors")
 {
     const tsm::ProcessSignalRequest request{
         {123, 456},
-        "worker",
-        tsm::ProcessSignal::Terminate};
+        "worker"};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -210,7 +182,7 @@ TEST_CASE("ProcessActionController formats permission and self errors")
     CHECK_FALSE(deniedController.Execute(request));
     REQUIRE(deniedState.ProcessStatus());
     CHECK(deniedState.ProcessStatus()->message ==
-          "Permission denied for PID 123");
+          "Permission denied for worker");
 
     ActionSignalSender selfSender;
     const tsm::ProcessControl selfControl(
@@ -222,7 +194,7 @@ TEST_CASE("ProcessActionController formats permission and self errors")
     CHECK_FALSE(selfController.Execute(request));
     REQUIRE(selfState.ProcessStatus());
     CHECK(selfState.ProcessStatus()->message.find(
-              "refusing to signal the monitor process") !=
+              "refusing to terminate the monitor process") !=
           std::string::npos);
     CHECK(selfSender.sendCount == 0);
 }
@@ -231,8 +203,7 @@ TEST_CASE("ProcessActionController formats signal system errors")
 {
     const tsm::ProcessSignalRequest request{
         {123, 456},
-        "worker",
-        tsm::ProcessSignal::Terminate};
+        "worker"};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -249,6 +220,6 @@ TEST_CASE("ProcessActionController formats signal system errors")
     REQUIRE(state.ProcessStatus());
     CHECK_FALSE(state.ProcessStatus()->success);
     CHECK(state.ProcessStatus()->message.find(
-              "Failed to send SIGTERM") != std::string::npos);
+              "Failed to terminate") != std::string::npos);
     CHECK(signalSender.sendCount == 1);
 }

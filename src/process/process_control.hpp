@@ -14,9 +14,7 @@ class ProcessSignalSender
 public:
     virtual ~ProcessSignalSender() = default;
 
-    virtual std::error_code Send(
-        ProcessId pid,
-        ProcessSignal signal) const = 0;
+    virtual std::error_code Send(ProcessId pid) const = 0;
 };
 
 class ProcessControl
@@ -27,9 +25,8 @@ public:
         const ProcessSignalSender& signalSender,
         ProcessId selfPid);
 
-    Result<ProcessSignalResult> SendSignal(
-        const ProcessIdentity& identity,
-        ProcessSignal signal) const;
+    Result<ProcessSignalResult> Terminate(
+        const ProcessIdentity& identity) const;
 
 private:
     const ProcSource& procSource;

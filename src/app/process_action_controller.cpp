@@ -7,37 +7,29 @@ namespace tsm
 namespace
 {
 
-std::string SignalName(ProcessSignal signal)
-{
-    return signal == ProcessSignal::Terminate
-        ? "SIGTERM"
-        : "SIGKILL";
-}
-
 std::string ErrorMessage(
     const ProcessSignalRequest& request,
     const Error& error)
 {
-    const std::string pid = std::to_string(request.identity.pid);
     switch (error.kind)
     {
         case ErrorKind::PermissionDenied:
-            return "Permission denied for PID " + pid;
+            return "Permission denied for " + request.name;
         case ErrorKind::Disappeared:
-            return "PID " + pid + " no longer exists";
+            return request.name + " is no longer running";
         case ErrorKind::IdentityMismatch:
-            return "PID " + pid +
-                " now belongs to another process";
+            return request.name + " has changed";
         case ErrorKind::InvalidData:
-            return "Cannot signal PID " + pid + ": " + error.message;
+            return "Cannot terminate " + request.name +
+                ": " + error.message;
         case ErrorKind::Io:
         case ErrorKind::Parse:
         case ErrorKind::SystemCall:
-            return "Failed to send " + SignalName(request.signal) +
-                " to PID " + pid + ": " + error.message;
+            return "Failed to terminate " + request.name +
+                ": " + error.message;
     }
 
-    return "Failed to signal PID " + pid;
+    return "Failed to terminate " + request.name;
 }
 
 }  // namespace
@@ -53,8 +45,8 @@ ProcessActionController::ProcessActionController(
 bool ProcessActionController::Execute(
     const ProcessSignalRequest& request)
 {
-    const auto result = processControl.SendSignal(
-        request.identity, request.signal);
+    const auto result = processControl.Terminate(
+        request.identity);
     if (!result)
     {
         state.SetProcessActionStatus(
@@ -63,9 +55,7 @@ bool ProcessActionController::Execute(
     }
 
     state.SetProcessActionStatus(
-        {SignalName(request.signal) + " sent to PID " +
-             std::to_string(request.identity.pid) + " (" +
-             request.name + ")",
+        {"Termination requested for " + request.name,
          true});
     return true;
 }

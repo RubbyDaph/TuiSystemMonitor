@@ -74,20 +74,16 @@ class FakeSignalSender final : public tsm::ProcessSignalSender
 {
 public:
     std::error_code Send(
-        tsm::ProcessId pid,
-        tsm::ProcessSignal signal) const override
+        tsm::ProcessId pid) const override
     {
         ++sendCount;
         sentPid = pid;
-        sentSignal = signal;
         return error;
     }
 
     std::error_code error;
     mutable int sendCount{};
     mutable tsm::ProcessId sentPid{};
-    mutable tsm::ProcessSignal sentSignal{
-        tsm::ProcessSignal::Terminate};
 };
 
 class ChildProcess
@@ -119,7 +115,7 @@ private:
 
 }  // namespace
 
-TEST_CASE("ProcessControl sends explicitly selected signals")
+TEST_CASE("ProcessControl sends one termination request")
 {
     const tsm::ProcessIdentity identity{123, 456};
     FakeProcSource procSource(
@@ -129,22 +125,11 @@ TEST_CASE("ProcessControl sends explicitly selected signals")
     const tsm::ProcessControl control(
         procSource, signalSender, 999);
 
-    const auto terminated = control.SendSignal(
-        identity, tsm::ProcessSignal::Terminate);
+    const auto terminated = control.Terminate(identity);
     REQUIRE(terminated);
     CHECK(terminated.Value().identity == identity);
-    CHECK(terminated.Value().signal ==
-          tsm::ProcessSignal::Terminate);
     CHECK(signalSender.sentPid == identity.pid);
-    CHECK(signalSender.sentSignal ==
-          tsm::ProcessSignal::Terminate);
-
-    const auto killed = control.SendSignal(
-        identity, tsm::ProcessSignal::Kill);
-    REQUIRE(killed);
-    CHECK(killed.Value().signal == tsm::ProcessSignal::Kill);
-    CHECK(signalSender.sentSignal == tsm::ProcessSignal::Kill);
-    CHECK(signalSender.sendCount == 2);
+    CHECK(signalSender.sendCount == 1);
 }
 
 TEST_CASE("ProcessControl rejects invalid and self PIDs")
@@ -156,23 +141,26 @@ TEST_CASE("ProcessControl rejects invalid and self PIDs")
     const tsm::ProcessControl control(
         procSource, signalSender, 100);
 
-    const auto zero = control.SendSignal(
-        {0, 1}, tsm::ProcessSignal::Terminate);
+    const auto zero = control.Terminate({0, 1});
     REQUIRE_FALSE(zero);
     CHECK(zero.GetError().kind == tsm::ErrorKind::InvalidData);
 
-    const auto negative = control.SendSignal(
-        {-5, 1}, tsm::ProcessSignal::Terminate);
+    const auto negative = control.Terminate({-5, 1});
     REQUIRE_FALSE(negative);
     CHECK(negative.GetError().kind ==
           tsm::ErrorKind::InvalidData);
 
-    const auto self = control.SendSignal(
-        {100, 1}, tsm::ProcessSignal::Terminate);
+    const auto self = control.Terminate({100, 1});
     REQUIRE_FALSE(self);
     CHECK(self.GetError().kind == tsm::ErrorKind::InvalidData);
     CHECK(procSource.readCount == 0);
     CHECK(signalSender.sendCount == 0);
+
+    const auto init = control.Terminate({1, 1});
+    REQUIRE_FALSE(init);
+    CHECK(init.GetError().kind == tsm::ErrorKind::InvalidData);
+    CHECK(init.GetError().message.find("init") != std::string::npos);
+    CHECK(procSource.readCount == 0);
 }
 
 TEST_CASE("ProcessControl propagates proc read and parse errors")
@@ -188,8 +176,7 @@ TEST_CASE("ProcessControl propagates proc read and parse errors")
              "process disappeared"}));
     const tsm::ProcessControl missingControl(
         missing, signalSender, 999);
-    const auto missingResult = missingControl.SendSignal(
-        {123, 1}, tsm::ProcessSignal::Terminate);
+    const auto missingResult = missingControl.Terminate({123, 1});
     REQUIRE_FALSE(missingResult);
     CHECK(missingResult.GetError().kind ==
           tsm::ErrorKind::Disappeared);
@@ -198,8 +185,7 @@ TEST_CASE("ProcessControl propagates proc read and parse errors")
         tsm::Result<std::string>::Success("malformed"));
     const tsm::ProcessControl malformedControl(
         malformed, signalSender, 999);
-    const auto malformedResult = malformedControl.SendSignal(
-        {123, 1}, tsm::ProcessSignal::Terminate);
+    const auto malformedResult = malformedControl.Terminate({123, 1});
     REQUIRE_FALSE(malformedResult);
     CHECK(malformedResult.GetError().kind ==
           tsm::ErrorKind::Parse);
@@ -215,8 +201,7 @@ TEST_CASE("ProcessControl detects reused process identities")
             MakeProcessStat(124, 456)));
     const tsm::ProcessControl pidControl(
         reusedPid, signalSender, 999);
-    const auto pidResult = pidControl.SendSignal(
-        {123, 456}, tsm::ProcessSignal::Terminate);
+    const auto pidResult = pidControl.Terminate({123, 456});
     REQUIRE_FALSE(pidResult);
     CHECK(pidResult.GetError().kind ==
           tsm::ErrorKind::IdentityMismatch);
@@ -226,8 +211,8 @@ TEST_CASE("ProcessControl detects reused process identities")
             MakeProcessStat(123, 999)));
     const tsm::ProcessControl startTimeControl(
         reusedStartTime, signalSender, 999);
-    const auto startTimeResult = startTimeControl.SendSignal(
-        {123, 456}, tsm::ProcessSignal::Terminate);
+    const auto startTimeResult =
+        startTimeControl.Terminate({123, 456});
     REQUIRE_FALSE(startTimeResult);
     CHECK(startTimeResult.GetError().kind ==
           tsm::ErrorKind::IdentityMismatch);
@@ -252,8 +237,7 @@ TEST_CASE("ProcessControl maps signal system errors")
             const tsm::ProcessControl control(
                 procSource, signalSender, 999);
 
-            const auto result = control.SendSignal(
-                identity, tsm::ProcessSignal::Terminate);
+            const auto result = control.Terminate(identity);
             REQUIRE_FALSE(result);
             CHECK(result.GetError().kind == expectedKind);
             CHECK(result.GetError().code.value() == errorNumber);
@@ -296,9 +280,8 @@ TEST_CASE("ProcessControl terminates only its own child process",
         procSource,
         signalSender,
         static_cast<tsm::ProcessId>(::getpid()));
-    const auto result = control.SendSignal(
-        stat.Value().identity,
-        tsm::ProcessSignal::Terminate);
+    const auto result = control.Terminate(
+        stat.Value().identity);
     REQUIRE(result);
 
     int status{};

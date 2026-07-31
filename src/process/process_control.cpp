@@ -43,9 +43,8 @@ ProcessControl::ProcessControl(
 {
 }
 
-Result<ProcessSignalResult> ProcessControl::SendSignal(
-    const ProcessIdentity& identity,
-    ProcessSignal signal) const
+Result<ProcessSignalResult> ProcessControl::Terminate(
+    const ProcessIdentity& identity) const
 {
     const std::string context =
         "process " + std::to_string(identity.pid);
@@ -65,7 +64,16 @@ Result<ProcessSignalResult> ProcessControl::SendSignal(
             {ErrorKind::InvalidData,
              context,
              {},
-             "refusing to signal the monitor process"});
+             "refusing to terminate the monitor process"});
+    }
+
+    if (identity.pid == 1)
+    {
+        return Result<ProcessSignalResult>::Failure(
+            {ErrorKind::InvalidData,
+             context,
+             {},
+             "refusing to terminate the system init process"});
     }
 
     auto statText = procSource.ReadProcessStat(identity.pid);
@@ -92,7 +100,7 @@ Result<ProcessSignalResult> ProcessControl::SendSignal(
     }
 
     const std::error_code signalError =
-        signalSender.Send(identity.pid, signal);
+        signalSender.Send(identity.pid);
     if (signalError)
     {
         return Result<ProcessSignalResult>::Failure(
@@ -100,7 +108,7 @@ Result<ProcessSignalResult> ProcessControl::SendSignal(
     }
 
     return Result<ProcessSignalResult>::Success(
-        {identity, signal});
+        {identity});
 }
 
 }  // namespace tsm

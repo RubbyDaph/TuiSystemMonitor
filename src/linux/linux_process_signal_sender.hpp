@@ -8,9 +8,7 @@ namespace tsm
 class LinuxProcessSignalSender final : public ProcessSignalSender
 {
 public:
-    std::error_code Send(
-        ProcessId pid,
-        ProcessSignal signal) const override;
+    std::error_code Send(ProcessId pid) const override;
 };
 
 }  // namespace tsm

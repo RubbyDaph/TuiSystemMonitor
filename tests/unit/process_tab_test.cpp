@@ -46,13 +46,12 @@ TEST_CASE("ProcessTab displays all required process columns")
     tsm::ProcessTab tab(state);
 
     REQUIRE(tab.RowCount() == 3);
-    CHECK(tab.CellText(0, 0) == "10");
-    CHECK(tab.CellText(0, 1) == "compiler");
-    CHECK(tab.CellText(0, 2) == "bob");
-    CHECK(tab.CellText(0, 3) == "150.0%");
-    CHECK(tab.CellText(0, 4) == "32.0 MiB");
-    CHECK(tab.CellText(0, 5) == "Running");
-    CHECK(tab.CellText(2, 3) == "-");
+    CHECK(tab.CellText(0, 0) == "compiler");
+    CHECK(tab.CellText(0, 1) == "bob");
+    CHECK(tab.CellText(0, 2) == "150.0%");
+    CHECK(tab.CellText(0, 3) == "32.0 MiB");
+    CHECK(tab.CellText(0, 4) == "Running");
+    CHECK(tab.CellText(1, 2) == "-");
 }
 
 TEST_CASE("ProcessTab selection follows identity across sorting")
@@ -61,7 +60,7 @@ TEST_CASE("ProcessTab selection follows identity across sorting")
     state.ApplySnapshot(MakeSnapshot());
     tsm::ProcessTab tab(state);
 
-    tab.SelectRow(1);
+    tab.SelectRow(2);
     REQUIRE(state.SelectedProcess());
     CHECK(state.SelectedProcess()->pid == 30);
 
@@ -71,7 +70,7 @@ TEST_CASE("ProcessTab selection follows identity across sorting")
     REQUIRE(state.SelectedProcess());
     CHECK(state.SelectedProcess()->pid == 30);
     CHECK(tab.SelectedRow() == 1);
-    CHECK(tab.CellText(1, 0) == "30");
+    CHECK(tab.CellText(1, 0) == "worker");
     CHECK(tab.StatusText().find("Sort: RAM") != std::string::npos);
 }
 
@@ -124,24 +123,42 @@ TEST_CASE("ProcessTab keeps the latest process action status")
     tsm::AppState state;
     state.ApplySnapshot(MakeSnapshot());
     state.SetProcessActionStatus(
-        {"SIGTERM sent to PID 10 (compiler)", true});
+        {"Termination requested for compiler", true});
     tsm::ProcessTab tab(state);
 
     CHECK(tab.ActionText() ==
-          "Success: SIGTERM sent to PID 10 (compiler)");
+          "Success: Termination requested for compiler");
     CHECK(tab.StatusText().find("t: terminate") !=
           std::string::npos);
-    CHECK(tab.StatusText().find("k: kill") !=
+    CHECK(tab.StatusText().find("k: kill") ==
+          std::string::npos);
+    CHECK(tab.StatusText().find("n/c/m: sort") !=
           std::string::npos);
 
     state.ApplySnapshot(MakeSnapshot());
     tab.Update();
     CHECK(tab.ActionText() ==
-          "Success: SIGTERM sent to PID 10 (compiler)");
+          "Success: Termination requested for compiler");
 
     state.SetProcessActionStatus(
-        {"Permission denied for PID 10", false});
+        {"Permission denied for compiler", false});
     tab.Update();
     CHECK(tab.ActionText() ==
-          "Error: Permission denied for PID 10");
+          "Error: Permission denied for compiler");
+}
+
+TEST_CASE("ProcessTab exposes one termination action")
+{
+    tsm::AppState state;
+    state.ApplySnapshot(MakeSnapshot());
+    tsm::ProcessTab tab(state);
+    int terminateCount{};
+    tab.SetTerminateAction(
+        [&terminateCount]()
+        {
+            ++terminateCount;
+        });
+
+    tab.TerminateSelected();
+    CHECK(terminateCount == 1);
 }

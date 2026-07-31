@@ -154,7 +154,7 @@ TEST_CASE("Invalid aggregate CPU delta rejects process calculation")
         processes, processes, cpu, overflowing));
 }
 
-TEST_CASE("Processes sort deterministically by PID CPU and memory")
+TEST_CASE("Processes sort deterministically by name CPU and memory")
 {
     std::vector<tsm::ProcessInfo> processes{
         {{30, 1}, "third", "alice", tsm::ProcessState::Sleeping, 50.0, 300},
@@ -163,9 +163,10 @@ TEST_CASE("Processes sort deterministically by PID CPU and memory")
         {{40, 1}, "new", "alice", tsm::ProcessState::Running, std::nullopt, 200},
     };
 
-    tsm::ProcessSorter{}.Sort(processes, tsm::ProcessSortKey::Pid);
+    tsm::ProcessSorter{}.Sort(processes, tsm::ProcessSortKey::Name);
     CHECK(processes[0].identity.pid == 10);
-    CHECK(processes[3].identity.pid == 40);
+    CHECK(processes[1].identity.pid == 40);
+    CHECK(processes[3].identity.pid == 30);
 
     tsm::ProcessSorter{}.Sort(processes, tsm::ProcessSortKey::Cpu);
     CHECK(processes[0].identity.pid == 10);

@@ -1,7 +1,9 @@
 #include "metrics/process_sorter.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <string>
 
 namespace tsm
 {
@@ -12,6 +14,20 @@ bool HasKnownCpu(const ProcessInfo& process)
 {
     return process.cpuPercent &&
            std::isfinite(*process.cpuPercent);
+}
+
+std::string LowerName(const std::string& name)
+{
+    std::string lower = name;
+    std::transform(
+        lower.begin(),
+        lower.end(),
+        lower.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(std::tolower(character));
+        });
+    return lower;
 }
 
 }  // namespace
@@ -25,9 +41,13 @@ void ProcessSorter::Sort(
         processes.end(),
         [key](const ProcessInfo& left, const ProcessInfo& right)
         {
-            if (key == ProcessSortKey::Pid)
+            const std::string leftName = LowerName(left.name);
+            const std::string rightName = LowerName(right.name);
+
+            if (key == ProcessSortKey::Name &&
+                leftName != rightName)
             {
-                return left.identity.pid < right.identity.pid;
+                return leftName < rightName;
             }
 
             if (key == ProcessSortKey::Memory &&
@@ -52,6 +72,14 @@ void ProcessSorter::Sort(
                 }
             }
 
+            if (leftName != rightName)
+            {
+                return leftName < rightName;
+            }
+            if (left.name != right.name)
+            {
+                return left.name < right.name;
+            }
             return left.identity.pid < right.identity.pid;
         });
 }

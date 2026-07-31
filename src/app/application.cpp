@@ -59,8 +59,7 @@ int Application::Run()
         });
     auto root = BuildRootView(state, systemTab, processTab);
     const auto openSignalDialog =
-        [&state, processTab, signalDialog](
-            ProcessSignal signal)
+        [&state, processTab, signalDialog]()
         {
             if (state.Tab() != ApplicationTab::Processes ||
                 signalDialog->IsOpen())
@@ -78,8 +77,9 @@ int Application::Run()
                 return;
             }
 
-            signalDialog->Open(*process, signal);
+            signalDialog->Open(*process);
         };
+    processTab->SetTerminateAction(openSignalDialog);
 
     app.register_key(
         'q',
@@ -106,13 +106,13 @@ int Application::Run()
             processTab->Update();
         });
     app.register_key(
-        'p',
+        'n',
         [&state, processTab, signalDialog]()
         {
             if (!signalDialog->IsOpen() &&
                 state.Tab() == ApplicationTab::Processes)
             {
-                state.SetSortKey(ProcessSortKey::Pid);
+                state.SetSortKey(ProcessSortKey::Name);
                 processTab->Update();
             }
         });
@@ -140,15 +140,9 @@ int Application::Run()
         });
     app.register_key(
         't',
-        [openSignalDialog]()
+        [processTab]()
         {
-            openSignalDialog(ProcessSignal::Terminate);
-        });
-    app.register_key(
-        'k',
-        [openSignalDialog]()
-        {
-            openSignalDialog(ProcessSignal::Kill);
+            processTab->TerminateSelected();
         });
     app.add_timer(
         1000,

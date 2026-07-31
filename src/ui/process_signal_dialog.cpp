@@ -60,8 +60,7 @@ ProcessSignalDialog::ProcessSignalDialog(
 }
 
 void ProcessSignalDialog::Open(
-    const ProcessInfo& process,
-    ProcessSignal signal)
+    const ProcessInfo& process)
 {
     if (is_open)
     {
@@ -70,21 +69,16 @@ void ProcessSignalDialog::Open(
 
     request = ProcessSignalRequest{
         process.identity,
-        process.name,
-        signal};
+        process.name};
 
-    const std::string signalName = SignalName(signal);
-    set_title("Confirm " + signalName);
+    set_title("Confirm termination");
     promptLabel->set_text(
-        "Send " + signalName + " to the selected process?");
+        "Terminate the selected process?");
     targetLabel->set_text(
-        "PID: " + std::to_string(process.identity.pid) +
-        " | Name: " + process.name);
+        "Name: " + process.name);
     warningLabel->set_text(
-        signal == ProcessSignal::Kill
-            ? "Warning: SIGKILL cannot be handled or undone."
-            : "The process may perform a graceful shutdown.");
-    confirmButton->set_label("Send " + signalName);
+        "The process may perform a graceful shutdown.");
+    confirmButton->set_label("Terminate");
     open();
 }
 
@@ -146,14 +140,6 @@ bool ProcessSignalDialog::on_event(
     }
 
     return cpptui::Dialog::on_event(event);
-}
-
-std::string ProcessSignalDialog::SignalName(
-    ProcessSignal signal) const
-{
-    return signal == ProcessSignal::Terminate
-        ? "SIGTERM"
-        : "SIGKILL";
 }
 
 }  // namespace tsm

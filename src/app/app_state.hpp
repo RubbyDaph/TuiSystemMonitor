@@ -47,7 +47,7 @@ private:
 
     std::optional<ApplicationSnapshot> snapshot;
     ApplicationTab tab{ApplicationTab::System};
-    ProcessSortKey sortKey{ProcessSortKey::Cpu};
+    ProcessSortKey sortKey{ProcessSortKey::Name};
     std::optional<ProcessIdentity> selectedProcess;
     std::optional<ProcessActionStatus> processStatus;
     std::string statusMessage{"Not updated yet"};
