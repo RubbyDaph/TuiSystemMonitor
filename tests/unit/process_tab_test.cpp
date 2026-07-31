@@ -118,3 +118,30 @@ TEST_CASE("Process state formatter covers Linux process states")
         CHECK_FALSE(tsm::FormatProcessState(state).empty());
     }
 }
+
+TEST_CASE("ProcessTab keeps the latest process action status")
+{
+    tsm::AppState state;
+    state.ApplySnapshot(MakeSnapshot());
+    state.SetProcessActionStatus(
+        {"SIGTERM sent to PID 10 (compiler)", true});
+    tsm::ProcessTab tab(state);
+
+    CHECK(tab.ActionText() ==
+          "Success: SIGTERM sent to PID 10 (compiler)");
+    CHECK(tab.StatusText().find("t: terminate") !=
+          std::string::npos);
+    CHECK(tab.StatusText().find("k: kill") !=
+          std::string::npos);
+
+    state.ApplySnapshot(MakeSnapshot());
+    tab.Update();
+    CHECK(tab.ActionText() ==
+          "Success: SIGTERM sent to PID 10 (compiler)");
+
+    state.SetProcessActionStatus(
+        {"Permission denied for PID 10", false});
+    tab.Update();
+    CHECK(tab.ActionText() ==
+          "Error: Permission denied for PID 10");
+}

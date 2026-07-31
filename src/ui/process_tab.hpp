@@ -24,6 +24,7 @@ public:
     std::size_t RowCount() const;
     int SelectedRow() const;
     const std::string& StatusText() const;
+    const std::string& ActionText() const;
     std::string CellText(
         std::size_t row,
         std::size_t column) const;
@@ -34,6 +35,7 @@ private:
 
     AppState& state;
     std::shared_ptr<cpptui::Label> statusLabel;
+    std::shared_ptr<cpptui::Label> actionLabel;
     std::shared_ptr<ProcessTable> processTable;
 };
 

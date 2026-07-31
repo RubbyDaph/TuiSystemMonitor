@@ -104,6 +104,11 @@ void AppState::SetRefreshing(bool newRefreshing)
     refreshing = newRefreshing;
 }
 
+void AppState::SetProcessActionStatus(ProcessActionStatus status)
+{
+    processStatus = std::move(status);
+}
+
 const std::optional<ApplicationSnapshot>& AppState::Snapshot() const
 {
     return snapshot;
@@ -124,9 +129,34 @@ const std::optional<ProcessIdentity>& AppState::SelectedProcess() const
     return selectedProcess;
 }
 
+const ProcessInfo* AppState::SelectedProcessInfo() const
+{
+    if (!snapshot || !selectedProcess)
+    {
+        return nullptr;
+    }
+
+    const auto selected = std::find_if(
+        snapshot->processes.processes.begin(),
+        snapshot->processes.processes.end(),
+        [this](const ProcessInfo& process)
+        {
+            return process.identity == *selectedProcess;
+        });
+    return selected == snapshot->processes.processes.end()
+        ? nullptr
+        : &*selected;
+}
+
 const std::string& AppState::StatusMessage() const
 {
     return statusMessage;
+}
+
+const std::optional<ProcessActionStatus>&
+AppState::ProcessStatus() const
+{
+    return processStatus;
 }
 
 bool AppState::IsRefreshing() const

@@ -89,6 +89,25 @@ enum class ProcessSortKey
     Memory,
 };
 
+enum class ProcessSignal
+{
+    Terminate,
+    Kill,
+};
+
+struct ProcessSignalResult
+{
+    ProcessIdentity identity;
+    ProcessSignal signal{ProcessSignal::Terminate};
+};
+
+struct ProcessSignalRequest
+{
+    ProcessIdentity identity;
+    std::string name;
+    ProcessSignal signal{ProcessSignal::Terminate};
+};
+
 struct ProcessCollection
 {
     std::vector<ProcessRawSample> processes;

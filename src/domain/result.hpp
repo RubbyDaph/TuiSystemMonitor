@@ -15,6 +15,7 @@ enum class ErrorKind
     Parse,
     PermissionDenied,
     Disappeared,
+    IdentityMismatch,
     InvalidData,
     SystemCall,
 };

@@ -32,9 +32,12 @@ public:
 ProcessTab::ProcessTab(AppState& state)
     : state(state),
       statusLabel(std::make_shared<cpptui::Label>("Waiting for data")),
+      actionLabel(std::make_shared<cpptui::Label>(
+          "No process action yet")),
       processTable(std::make_shared<ProcessTable>())
 {
     statusLabel->fixed_height = 1;
+    actionLabel->fixed_height = 1;
     processTable->columns = {
         "PID", "Name", "User", "CPU", "RAM", "State"};
     processTable->col_widths = {8, 24, 16, 10, 12, 12};
@@ -45,6 +48,7 @@ ProcessTab::ProcessTab(AppState& state)
         };
 
     add(statusLabel);
+    add(actionLabel);
     add(processTable);
     Update();
 }
@@ -52,11 +56,25 @@ ProcessTab::ProcessTab(AppState& state)
 void ProcessTab::Update()
 {
     processTable->rows.clear();
+    if (state.ProcessStatus())
+    {
+        actionLabel->set_text(
+            std::string(
+                state.ProcessStatus()->success
+                    ? "Success: "
+                    : "Error: ") +
+            state.ProcessStatus()->message);
+    }
+    else
+    {
+        actionLabel->set_text("No process action yet");
+    }
 
     if (!state.Snapshot())
     {
         statusLabel->set_text(
-            "Waiting for data | r: refresh | p/c/m: sort");
+            "Waiting for data | r: refresh | p/c/m: sort | "
+            "t: terminate | k: kill");
         processTable->selected_index = 0;
         processTable->scroll_offset = 0;
         return;
@@ -86,7 +104,7 @@ void ProcessTab::Update()
 
     statusLabel->set_text(
         availability + " | Sort: " + SortName() +
-        " | r: refresh | p/c/m: sort | arrows: select");
+        " | r: refresh | p/c/m: sort | t: terminate | k: kill");
 
     if (processes.processes.empty())
     {
@@ -142,6 +160,11 @@ int ProcessTab::SelectedRow() const
 const std::string& ProcessTab::StatusText() const
 {
     return statusLabel->get_text();
+}
+
+const std::string& ProcessTab::ActionText() const
+{
+    return actionLabel->get_text();
 }
 
 std::string ProcessTab::CellText(
