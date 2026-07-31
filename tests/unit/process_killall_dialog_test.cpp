@@ -1,4 +1,4 @@
-#include "ui/process_signal_dialog.hpp"
+#include "ui/process_killall_dialog.hpp"
 
 #include <cpptui.hpp>
 
@@ -24,26 +24,30 @@ tsm::ProcessInfo MakeDialogProcess()
 
 }  // namespace
 
-TEST_CASE("ProcessSignalDialog shows the selected target")
+TEST_CASE("ProcessKillallDialog shows name and match count")
 {
     cpptui::App app;
-    std::vector<tsm::ProcessSignalRequest> confirmed;
-    auto dialog = std::make_shared<tsm::ProcessSignalDialog>(
+    std::vector<tsm::ProcessKillallRequest> confirmed;
+    auto dialog = std::make_shared<tsm::ProcessKillallDialog>(
         app,
-        [&confirmed](const tsm::ProcessSignalRequest& request)
+        [&confirmed](const tsm::ProcessKillallRequest& request)
         {
             confirmed.push_back(request);
         });
 
-    dialog->Open(MakeDialogProcess());
+    const auto process = MakeDialogProcess();
+    dialog->Open(
+        {process.name,
+         {process.identity, {124, 457}}});
 
     CHECK(dialog->IsOpen());
     CHECK(dialog->modal);
     REQUIRE(dialog->Request());
-    CHECK(dialog->Request()->identity ==
-          tsm::ProcessIdentity{123, 456});
     CHECK(dialog->Request()->name == "worker");
-    CHECK(dialog->PromptText().find("Terminate") !=
+    CHECK(dialog->Request()->identities.size() == 2);
+    CHECK(dialog->PromptText().find("Terminate all") !=
+          std::string::npos);
+    CHECK(dialog->TargetText().find("Count: 2") !=
           std::string::npos);
     CHECK(dialog->WarningText().find("graceful") !=
           std::string::npos);
@@ -52,25 +56,28 @@ TEST_CASE("ProcessSignalDialog shows the selected target")
     dialog->Cancel();
 }
 
-TEST_CASE("ProcessSignalDialog cancellation sends nothing")
+TEST_CASE("ProcessKillallDialog cancellation sends nothing")
 {
     cpptui::App app;
     int confirmCount{};
-    auto dialog = std::make_shared<tsm::ProcessSignalDialog>(
+    auto dialog = std::make_shared<tsm::ProcessKillallDialog>(
         app,
-        [&confirmCount](const tsm::ProcessSignalRequest&)
+        [&confirmCount](const tsm::ProcessKillallRequest&)
         {
             ++confirmCount;
         });
 
-    dialog->Open(MakeDialogProcess());
+    const auto process = MakeDialogProcess();
+    const tsm::ProcessKillallRequest request{
+        process.name, {process.identity}};
+    dialog->Open(request);
     dialog->Cancel();
 
     CHECK_FALSE(dialog->IsOpen());
     CHECK_FALSE(dialog->Request());
     CHECK(confirmCount == 0);
 
-    dialog->Open(MakeDialogProcess());
+    dialog->Open(request);
     cpptui::Event escape;
     escape.type = cpptui::EventType::Key;
     escape.key = 27;
@@ -79,7 +86,7 @@ TEST_CASE("ProcessSignalDialog cancellation sends nothing")
     CHECK_FALSE(dialog->Request());
     CHECK(confirmCount == 0);
 
-    dialog->Open(MakeDialogProcess());
+    dialog->Open(request);
     cpptui::Event quit;
     quit.type = cpptui::EventType::Key;
     quit.key = 'q';
@@ -88,28 +95,31 @@ TEST_CASE("ProcessSignalDialog cancellation sends nothing")
     CHECK(confirmCount == 0);
 }
 
-TEST_CASE("ProcessSignalDialog confirms its captured target once")
+TEST_CASE("ProcessKillallDialog confirms its captured group once")
 {
     cpptui::App app;
-    std::vector<tsm::ProcessSignalRequest> confirmed;
-    auto dialog = std::make_shared<tsm::ProcessSignalDialog>(
+    std::vector<tsm::ProcessKillallRequest> confirmed;
+    auto dialog = std::make_shared<tsm::ProcessKillallDialog>(
         app,
-        [&confirmed](const tsm::ProcessSignalRequest& request)
+        [&confirmed](const tsm::ProcessKillallRequest& request)
         {
             confirmed.push_back(request);
         });
-    auto process = MakeDialogProcess();
+    const auto process = MakeDialogProcess();
+    tsm::ProcessKillallRequest request{
+        process.name, {process.identity}};
 
-    dialog->Open(process);
-    process.identity = {999, 888};
-    process.name = "changed";
+    dialog->Open(request);
+    request.identities = {{999, 888}};
+    request.name = "changed";
     dialog->Confirm();
     dialog->Confirm();
 
     REQUIRE(confirmed.size() == 1);
-    CHECK(confirmed[0].identity ==
-          tsm::ProcessIdentity{123, 456});
     CHECK(confirmed[0].name == "worker");
+    REQUIRE(confirmed[0].identities.size() == 1);
+    CHECK(confirmed[0].identities[0] ==
+          tsm::ProcessIdentity{123, 456});
     CHECK_FALSE(dialog->IsOpen());
     CHECK_FALSE(dialog->Request());
 }

@@ -14,7 +14,7 @@ public:
         AppState& state,
         const ProcessControl& processControl);
 
-    bool Execute(const ProcessSignalRequest& request);
+    bool Execute(const ProcessKillallRequest& request);
 
 private:
     AppState& state;

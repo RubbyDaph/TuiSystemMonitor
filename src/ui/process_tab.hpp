@@ -21,8 +21,8 @@ public:
 
     void Update();
     void SelectRow(std::size_t index);
-    void SetTerminateAction(std::function<void()> action);
-    void TerminateSelected();
+    void SetKillallAction(std::function<void()> action);
+    void KillallSelected();
 
     std::size_t RowCount() const;
     int SelectedRow() const;
@@ -39,9 +39,9 @@ private:
     AppState& state;
     std::shared_ptr<cpptui::Label> statusLabel;
     std::shared_ptr<cpptui::Label> actionLabel;
-    std::shared_ptr<cpptui::Button> terminateButton;
+    std::shared_ptr<cpptui::Button> killallButton;
     std::shared_ptr<ProcessTable> processTable;
-    std::function<void()> terminateAction;
+    std::function<void()> killallAction;
 };
 
 }  // namespace tsm

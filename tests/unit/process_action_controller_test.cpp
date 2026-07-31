@@ -74,13 +74,43 @@ public:
     mutable int sendCount{};
 };
 
+class GroupProcSource final : public tsm::ProcSource
+{
+public:
+    tsm::Result<std::vector<tsm::ProcessId>>
+    ListProcessIds() const override
+    {
+        return tsm::Result<std::vector<tsm::ProcessId>>::Success(
+            {});
+    }
+
+    tsm::Result<std::string> ReadProcessStat(
+        tsm::ProcessId pid) const override
+    {
+        return tsm::Result<std::string>::Success(
+            MakeActionStat(
+                pid,
+                static_cast<std::uint64_t>(pid + 100)));
+    }
+
+    tsm::Result<std::string> ReadProcessStatus(
+        tsm::ProcessId) const override
+    {
+        return tsm::Result<std::string>::Failure(
+            {tsm::ErrorKind::InvalidData,
+             "unused",
+             {},
+             "unused"});
+    }
+};
+
 }  // namespace
 
 TEST_CASE("ProcessActionController stores successful actions")
 {
-    const tsm::ProcessSignalRequest request{
-        {123, 456},
-        "worker"};
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{123, 456}}};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -95,15 +125,15 @@ TEST_CASE("ProcessActionController stores successful actions")
     REQUIRE(state.ProcessStatus());
     CHECK(state.ProcessStatus()->success);
     CHECK(state.ProcessStatus()->message ==
-          "Termination requested for worker");
+          "Killall requested for worker: 1 process(es)");
     CHECK(signalSender.sendCount == 1);
 }
 
 TEST_CASE("ProcessActionController formats process errors")
 {
-    const tsm::ProcessSignalRequest request{
-        {123, 456},
-        "worker"};
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{123, 456}}};
 
     const auto checkProcError =
         [&request](
@@ -164,9 +194,9 @@ TEST_CASE("ProcessActionController formats process errors")
 
 TEST_CASE("ProcessActionController formats permission and self errors")
 {
-    const tsm::ProcessSignalRequest request{
-        {123, 456},
-        "worker"};
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{123, 456}}};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -201,9 +231,9 @@ TEST_CASE("ProcessActionController formats permission and self errors")
 
 TEST_CASE("ProcessActionController formats signal system errors")
 {
-    const tsm::ProcessSignalRequest request{
-        {123, 456},
-        "worker"};
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{123, 456}}};
     ActionProcSource procSource(
         tsm::Result<std::string>::Success(
             MakeActionStat(123, 456)));
@@ -222,4 +252,63 @@ TEST_CASE("ProcessActionController formats signal system errors")
     CHECK(state.ProcessStatus()->message.find(
               "Failed to terminate") != std::string::npos);
     CHECK(signalSender.sendCount == 1);
+}
+
+TEST_CASE("ProcessActionController terminates every unique match")
+{
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{10, 110}, {20, 120}, {10, 110}}};
+    const GroupProcSource procSource;
+    ActionSignalSender signalSender;
+    const tsm::ProcessControl processControl(
+        procSource, signalSender, 999);
+    tsm::AppState state;
+    tsm::ProcessActionController controller(
+        state, processControl);
+
+    CHECK(controller.Execute(request));
+    CHECK(signalSender.sendCount == 2);
+    REQUIRE(state.ProcessStatus());
+    CHECK(state.ProcessStatus()->success);
+    CHECK(state.ProcessStatus()->message.find("2 process") !=
+          std::string::npos);
+}
+
+TEST_CASE("ProcessActionController reports partial killall")
+{
+    const tsm::ProcessKillallRequest request{
+        "worker",
+        {{10, 110}, {1, 101}}};
+    const GroupProcSource procSource;
+    ActionSignalSender signalSender;
+    const tsm::ProcessControl processControl(
+        procSource, signalSender, 999);
+    tsm::AppState state;
+    tsm::ProcessActionController controller(
+        state, processControl);
+
+    CHECK_FALSE(controller.Execute(request));
+    CHECK(signalSender.sendCount == 1);
+    REQUIRE(state.ProcessStatus());
+    CHECK_FALSE(state.ProcessStatus()->success);
+    CHECK(state.ProcessStatus()->message.find(
+              "partially completed") != std::string::npos);
+}
+
+TEST_CASE("ProcessActionController rejects an empty killall")
+{
+    const GroupProcSource procSource;
+    ActionSignalSender signalSender;
+    const tsm::ProcessControl processControl(
+        procSource, signalSender, 999);
+    tsm::AppState state;
+    tsm::ProcessActionController controller(
+        state, processControl);
+
+    CHECK_FALSE(controller.Execute({"worker", {}}));
+    CHECK(signalSender.sendCount == 0);
+    REQUIRE(state.ProcessStatus());
+    CHECK(state.ProcessStatus()->message.find("No matching") !=
+          std::string::npos);
 }

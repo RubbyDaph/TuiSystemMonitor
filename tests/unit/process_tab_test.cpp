@@ -123,14 +123,14 @@ TEST_CASE("ProcessTab keeps the latest process action status")
     tsm::AppState state;
     state.ApplySnapshot(MakeSnapshot());
     state.SetProcessActionStatus(
-        {"Termination requested for compiler", true});
+        {"Killall requested for compiler: 2 process(es)", true});
     tsm::ProcessTab tab(state);
 
     CHECK(tab.ActionText() ==
-          "Success: Termination requested for compiler");
-    CHECK(tab.StatusText().find("t: terminate") !=
+          "Success: Killall requested for compiler: 2 process(es)");
+    CHECK(tab.StatusText().find("k: killall") !=
           std::string::npos);
-    CHECK(tab.StatusText().find("k: kill") ==
+    CHECK(tab.StatusText().find("t: terminate") ==
           std::string::npos);
     CHECK(tab.StatusText().find("n/c/m: sort") !=
           std::string::npos);
@@ -138,7 +138,7 @@ TEST_CASE("ProcessTab keeps the latest process action status")
     state.ApplySnapshot(MakeSnapshot());
     tab.Update();
     CHECK(tab.ActionText() ==
-          "Success: Termination requested for compiler");
+          "Success: Killall requested for compiler: 2 process(es)");
 
     state.SetProcessActionStatus(
         {"Permission denied for compiler", false});
@@ -147,18 +147,18 @@ TEST_CASE("ProcessTab keeps the latest process action status")
           "Error: Permission denied for compiler");
 }
 
-TEST_CASE("ProcessTab exposes one termination action")
+TEST_CASE("ProcessTab exposes one killall action")
 {
     tsm::AppState state;
     state.ApplySnapshot(MakeSnapshot());
     tsm::ProcessTab tab(state);
-    int terminateCount{};
-    tab.SetTerminateAction(
-        [&terminateCount]()
+    int killallCount{};
+    tab.SetKillallAction(
+        [&killallCount]()
         {
-            ++terminateCount;
+            ++killallCount;
         });
 
-    tab.TerminateSelected();
-    CHECK(terminateCount == 1);
+    tab.KillallSelected();
+    CHECK(killallCount == 1);
 }

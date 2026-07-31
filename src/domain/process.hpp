@@ -89,15 +89,15 @@ enum class ProcessSortKey
     Memory,
 };
 
+struct ProcessKillallRequest
+{
+    std::string name;
+    std::vector<ProcessIdentity> identities;
+};
+
 struct ProcessSignalResult
 {
     ProcessIdentity identity;
-};
-
-struct ProcessSignalRequest
-{
-    ProcessIdentity identity;
-    std::string name;
 };
 
 struct ProcessCollection

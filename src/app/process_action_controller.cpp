@@ -1,6 +1,9 @@
 #include "app/process_action_controller.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <string>
+#include <vector>
 
 namespace tsm
 {
@@ -8,7 +11,7 @@ namespace
 {
 
 std::string ErrorMessage(
-    const ProcessSignalRequest& request,
+    const ProcessKillallRequest& request,
     const Error& error)
 {
     switch (error.kind)
@@ -43,21 +46,62 @@ ProcessActionController::ProcessActionController(
 }
 
 bool ProcessActionController::Execute(
-    const ProcessSignalRequest& request)
+    const ProcessKillallRequest& request)
 {
-    const auto result = processControl.Terminate(
-        request.identity);
-    if (!result)
+    if (request.identities.empty())
     {
         state.SetProcessActionStatus(
-            {ErrorMessage(request, result.GetError()), false});
+            {"No matching processes for " + request.name, false});
+        return false;
+    }
+
+    std::vector<ProcessIdentity> processed;
+    std::vector<Error> errors;
+    std::size_t terminated{};
+    for (const auto& identity : request.identities)
+    {
+        if (std::find(
+                processed.begin(),
+                processed.end(),
+                identity) != processed.end())
+        {
+            continue;
+        }
+        processed.push_back(identity);
+
+        const auto result = processControl.Terminate(identity);
+        if (result)
+        {
+            ++terminated;
+        }
+        else
+        {
+            errors.push_back(result.GetError());
+        }
+    }
+
+    if (errors.empty())
+    {
+        state.SetProcessActionStatus(
+            {"Killall requested for " + request.name + ": " +
+                 std::to_string(terminated) + " process(es)",
+             true});
+        return true;
+    }
+
+    if (terminated == 0)
+    {
+        state.SetProcessActionStatus(
+            {ErrorMessage(request, errors.front()), false});
         return false;
     }
 
     state.SetProcessActionStatus(
-        {"Termination requested for " + request.name,
-         true});
-    return true;
+        {"Killall partially completed for " + request.name +
+             ": " + std::to_string(terminated) + " requested, " +
+             std::to_string(errors.size()) + " failed",
+         false});
+    return false;
 }
 
 }  // namespace tsm

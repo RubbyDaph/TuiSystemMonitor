@@ -1,4 +1,4 @@
-#include "ui/process_signal_dialog.hpp"
+#include "ui/process_killall_dialog.hpp"
 
 #include <string>
 #include <utility>
@@ -6,7 +6,7 @@
 namespace tsm
 {
 
-ProcessSignalDialog::ProcessSignalDialog(
+ProcessKillallDialog::ProcessKillallDialog(
     cpptui::App& app,
     ConfirmCallback onConfirm)
     : cpptui::Dialog(
@@ -59,37 +59,40 @@ ProcessSignalDialog::ProcessSignalDialog(
     add(content);
 }
 
-void ProcessSignalDialog::Open(
-    const ProcessInfo& process)
+void ProcessKillallDialog::Open(
+    const ProcessKillallRequest& newRequest)
 {
     if (is_open)
     {
         return;
     }
 
-    request = ProcessSignalRequest{
-        process.identity,
-        process.name};
+    if (newRequest.identities.empty())
+    {
+        return;
+    }
+    request = newRequest;
 
-    set_title("Confirm termination");
+    set_title("Confirm killall");
     promptLabel->set_text(
-        "Terminate the selected process?");
+        "Terminate all processes with this name?");
     targetLabel->set_text(
-        "Name: " + process.name);
+        "Name: " + request->name + " | Count: " +
+        std::to_string(request->identities.size()));
     warningLabel->set_text(
         "The process may perform a graceful shutdown.");
-    confirmButton->set_label("Terminate");
+    confirmButton->set_label("Killall");
     open();
 }
 
-void ProcessSignalDialog::Confirm()
+void ProcessKillallDialog::Confirm()
 {
     if (!request)
     {
         return;
     }
 
-    const ProcessSignalRequest confirmed = *request;
+    const ProcessKillallRequest confirmed = *request;
     request.reset();
     close();
     if (onConfirm)
@@ -98,34 +101,39 @@ void ProcessSignalDialog::Confirm()
     }
 }
 
-void ProcessSignalDialog::Cancel()
+void ProcessKillallDialog::Cancel()
 {
     request.reset();
     close();
 }
 
-bool ProcessSignalDialog::IsOpen() const
+bool ProcessKillallDialog::IsOpen() const
 {
     return is_open;
 }
 
-const std::optional<ProcessSignalRequest>&
-ProcessSignalDialog::Request() const
+const std::optional<ProcessKillallRequest>&
+ProcessKillallDialog::Request() const
 {
     return request;
 }
 
-const std::string& ProcessSignalDialog::PromptText() const
+const std::string& ProcessKillallDialog::PromptText() const
 {
     return promptLabel->get_text();
 }
 
-const std::string& ProcessSignalDialog::WarningText() const
+const std::string& ProcessKillallDialog::TargetText() const
+{
+    return targetLabel->get_text();
+}
+
+const std::string& ProcessKillallDialog::WarningText() const
 {
     return warningLabel->get_text();
 }
 
-bool ProcessSignalDialog::on_event(
+bool ProcessKillallDialog::on_event(
     const cpptui::Event& event)
 {
     if (event.is_key_event() && event.is_escape())

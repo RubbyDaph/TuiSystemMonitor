@@ -35,18 +35,18 @@ ProcessTab::ProcessTab(AppState& state)
       statusLabel(std::make_shared<cpptui::Label>("Waiting for data")),
       actionLabel(std::make_shared<cpptui::Label>(
           "No process action yet")),
-      terminateButton(std::make_shared<cpptui::Button>(
-          "Terminate selected",
+      killallButton(std::make_shared<cpptui::Button>(
+          "Killall by name",
           [this]()
           {
-              TerminateSelected();
+              KillallSelected();
           })),
       processTable(std::make_shared<ProcessTable>())
 {
     statusLabel->fixed_height = 1;
     actionLabel->fixed_height = 1;
-    terminateButton->fixed_height = 1;
-    terminateButton->fixed_width = 24;
+    killallButton->fixed_height = 1;
+    killallButton->fixed_width = 24;
     processTable->columns = {
         "Name", "User", "CPU", "RAM", "State"};
     processTable->col_widths = {28, 16, 10, 12, 12};
@@ -58,7 +58,7 @@ ProcessTab::ProcessTab(AppState& state)
 
     add(statusLabel);
     add(actionLabel);
-    add(terminateButton);
+    add(killallButton);
     add(processTable);
     Update();
 }
@@ -84,7 +84,7 @@ void ProcessTab::Update()
     {
         statusLabel->set_text(
             "Waiting for data | r: refresh | n/c/m: sort | "
-            "t: terminate");
+            "k: killall");
         processTable->selected_index = 0;
         processTable->scroll_offset = 0;
         return;
@@ -113,7 +113,7 @@ void ProcessTab::Update()
 
     statusLabel->set_text(
         availability + " | Sort: " + SortName() +
-        " | r: refresh | n/c/m: sort | t: terminate");
+        " | r: refresh | n/c/m: sort | k: killall");
 
     if (processes.processes.empty())
     {
@@ -156,17 +156,17 @@ void ProcessTab::SelectRow(std::size_t index)
     ApplyTableSelection(static_cast<int>(index));
 }
 
-void ProcessTab::SetTerminateAction(
+void ProcessTab::SetKillallAction(
     std::function<void()> action)
 {
-    terminateAction = std::move(action);
+    killallAction = std::move(action);
 }
 
-void ProcessTab::TerminateSelected()
+void ProcessTab::KillallSelected()
 {
-    if (terminateAction)
+    if (killallAction)
     {
-        terminateAction();
+        killallAction();
     }
 }
 

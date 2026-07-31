@@ -12,30 +12,31 @@
 namespace tsm
 {
 
-class ProcessSignalDialog final : public cpptui::Dialog
+class ProcessKillallDialog final : public cpptui::Dialog
 {
 public:
     using ConfirmCallback =
-        std::function<void(const ProcessSignalRequest&)>;
+        std::function<void(const ProcessKillallRequest&)>;
 
-    ProcessSignalDialog(
+    ProcessKillallDialog(
         cpptui::App& app,
         ConfirmCallback onConfirm);
 
-    void Open(const ProcessInfo& process);
+    void Open(const ProcessKillallRequest& request);
     void Confirm();
     void Cancel();
 
     bool IsOpen() const;
-    const std::optional<ProcessSignalRequest>& Request() const;
+    const std::optional<ProcessKillallRequest>& Request() const;
     const std::string& PromptText() const;
+    const std::string& TargetText() const;
     const std::string& WarningText() const;
 
     bool on_event(const cpptui::Event& event) override;
 
 private:
     ConfirmCallback onConfirm;
-    std::optional<ProcessSignalRequest> request;
+    std::optional<ProcessKillallRequest> request;
     std::shared_ptr<cpptui::Label> promptLabel;
     std::shared_ptr<cpptui::Label> targetLabel;
     std::shared_ptr<cpptui::Label> warningLabel;

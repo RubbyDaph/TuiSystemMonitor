@@ -12,7 +12,7 @@
 #include "linux/linux_system_source.hpp"
 #include "linux/linux_user_resolver.hpp"
 #include "process/process_control.hpp"
-#include "ui/process_signal_dialog.hpp"
+#include "ui/process_killall_dialog.hpp"
 #include "ui/root_view.hpp"
 #include "ui/process_tab.hpp"
 #include "ui/system_tab.hpp"
@@ -49,20 +49,20 @@ int Application::Run()
     cpptui::App app;
     auto systemTab = std::make_shared<SystemTab>(state);
     auto processTab = std::make_shared<ProcessTab>(state);
-    auto signalDialog = std::make_shared<ProcessSignalDialog>(
+    auto killallDialog = std::make_shared<ProcessKillallDialog>(
         app,
         [&processActionController, processTab](
-            const ProcessSignalRequest& request)
+            const ProcessKillallRequest& request)
         {
             processActionController.Execute(request);
             processTab->Update();
         });
     auto root = BuildRootView(state, systemTab, processTab);
-    const auto openSignalDialog =
-        [&state, processTab, signalDialog]()
+    const auto openKillallDialog =
+        [&state, processTab, killallDialog]()
         {
             if (state.Tab() != ApplicationTab::Processes ||
-                signalDialog->IsOpen())
+                killallDialog->IsOpen())
             {
                 return;
             }
@@ -77,17 +77,28 @@ int Application::Run()
                 return;
             }
 
-            signalDialog->Open(*process);
+            ProcessKillallRequest request;
+            request.name = process->name;
+            for (const auto& candidate :
+                 state.Snapshot()->processes.processes)
+            {
+                if (candidate.name == process->name)
+                {
+                    request.identities.push_back(
+                        candidate.identity);
+                }
+            }
+            killallDialog->Open(request);
         };
-    processTab->SetTerminateAction(openSignalDialog);
+    processTab->SetKillallAction(openKillallDialog);
 
     app.register_key(
         'q',
-        [signalDialog]()
+        [killallDialog]()
         {
-            if (signalDialog->IsOpen())
+            if (killallDialog->IsOpen())
             {
-                signalDialog->Cancel();
+                killallDialog->Cancel();
                 return;
             }
 
@@ -95,9 +106,9 @@ int Application::Run()
         });
     app.register_key(
         'r',
-        [&controller, systemTab, processTab, signalDialog]()
+        [&controller, systemTab, processTab, killallDialog]()
         {
-            if (signalDialog->IsOpen())
+            if (killallDialog->IsOpen())
             {
                 return;
             }
@@ -107,9 +118,9 @@ int Application::Run()
         });
     app.register_key(
         'n',
-        [&state, processTab, signalDialog]()
+        [&state, processTab, killallDialog]()
         {
-            if (!signalDialog->IsOpen() &&
+            if (!killallDialog->IsOpen() &&
                 state.Tab() == ApplicationTab::Processes)
             {
                 state.SetSortKey(ProcessSortKey::Name);
@@ -118,9 +129,9 @@ int Application::Run()
         });
     app.register_key(
         'c',
-        [&state, processTab, signalDialog]()
+        [&state, processTab, killallDialog]()
         {
-            if (!signalDialog->IsOpen() &&
+            if (!killallDialog->IsOpen() &&
                 state.Tab() == ApplicationTab::Processes)
             {
                 state.SetSortKey(ProcessSortKey::Cpu);
@@ -129,9 +140,9 @@ int Application::Run()
         });
     app.register_key(
         'm',
-        [&state, processTab, signalDialog]()
+        [&state, processTab, killallDialog]()
         {
-            if (!signalDialog->IsOpen() &&
+            if (!killallDialog->IsOpen() &&
                 state.Tab() == ApplicationTab::Processes)
             {
                 state.SetSortKey(ProcessSortKey::Memory);
@@ -139,10 +150,10 @@ int Application::Run()
             }
         });
     app.register_key(
-        't',
+        'k',
         [processTab]()
         {
-            processTab->TerminateSelected();
+            processTab->KillallSelected();
         });
     app.add_timer(
         1000,
