@@ -10,6 +10,7 @@
 #include "linux/linux_system_source.hpp"
 #include "linux/linux_user_resolver.hpp"
 #include "ui/root_view.hpp"
+#include "ui/process_tab.hpp"
 #include "ui/system_tab.hpp"
 
 #include <cpptui.hpp>
@@ -34,14 +35,54 @@ int Application::Run()
 
     cpptui::App app;
     auto systemTab = std::make_shared<SystemTab>(state);
-    auto root = BuildRootView(systemTab);
+    auto processTab = std::make_shared<ProcessTab>(state);
+    auto root = BuildRootView(state, systemTab, processTab);
     app.register_exit_key('q');
-    app.add_timer(
-        1000,
-        [&controller, systemTab]()
+    app.register_key(
+        'r',
+        [&controller, systemTab, processTab]()
         {
             controller.Refresh();
             systemTab->Update();
+            processTab->Update();
+        });
+    app.register_key(
+        'p',
+        [&state, processTab]()
+        {
+            if (state.Tab() == ApplicationTab::Processes)
+            {
+                state.SetSortKey(ProcessSortKey::Pid);
+                processTab->Update();
+            }
+        });
+    app.register_key(
+        'c',
+        [&state, processTab]()
+        {
+            if (state.Tab() == ApplicationTab::Processes)
+            {
+                state.SetSortKey(ProcessSortKey::Cpu);
+                processTab->Update();
+            }
+        });
+    app.register_key(
+        'm',
+        [&state, processTab]()
+        {
+            if (state.Tab() == ApplicationTab::Processes)
+            {
+                state.SetSortKey(ProcessSortKey::Memory);
+                processTab->Update();
+            }
+        });
+    app.add_timer(
+        1000,
+        [&controller, systemTab, processTab]()
+        {
+            controller.Refresh();
+            systemTab->Update();
+            processTab->Update();
         });
     app.run(root);
     return 0;

@@ -46,4 +46,33 @@ std::string FormatPercent(std::optional<double> percent)
     return output.str();
 }
 
+std::string FormatProcessState(ProcessState state)
+{
+    switch (state)
+    {
+        case ProcessState::Running:
+            return "Running";
+        case ProcessState::Sleeping:
+            return "Sleeping";
+        case ProcessState::DiskSleep:
+            return "Disk sleep";
+        case ProcessState::Stopped:
+            return "Stopped";
+        case ProcessState::TracingStop:
+            return "Tracing";
+        case ProcessState::Zombie:
+            return "Zombie";
+        case ProcessState::Dead:
+            return "Dead";
+        case ProcessState::Parked:
+            return "Parked";
+        case ProcessState::Idle:
+            return "Idle";
+        case ProcessState::Unknown:
+            return "Unknown";
+    }
+
+    return "Unknown";
+}
+
 }  // namespace tsm

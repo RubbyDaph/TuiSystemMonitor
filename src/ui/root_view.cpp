@@ -1,36 +1,33 @@
 #include "ui/root_view.hpp"
 
-#include "app/app_info.hpp"
+#include "app/app_state.hpp"
+#include "ui/process_tab.hpp"
 #include "ui/system_tab.hpp"
 
 #include <cpptui.hpp>
 
 #include <memory>
-#include <string>
 
 namespace tsm
 {
 
-std::shared_ptr<cpptui::Widget> BuildRootView(const AppState& state)
+std::shared_ptr<cpptui::Widget> BuildRootView(AppState& state)
 {
-    return BuildRootView(std::make_shared<SystemTab>(state));
+    return BuildRootView(
+        state,
+        std::make_shared<SystemTab>(state),
+        std::make_shared<ProcessTab>(state));
 }
 
 std::shared_ptr<cpptui::Widget> BuildRootView(
-    const std::shared_ptr<SystemTab>& systemContent)
+    AppState& state,
+    const std::shared_ptr<SystemTab>& systemContent,
+    const std::shared_ptr<ProcessTab>& processContent)
 {
-
     auto systemTab = std::make_shared<cpptui::Border>(
             cpptui::BorderStyle::Rounded);
     systemTab->set_title("System statistics");
     systemTab->add(systemContent);
-
-    auto processContent = std::make_shared<cpptui::Vertical>();
-    processContent->add(std::make_shared<cpptui::Label>(
-                "Process list will be added in a later stage"));
-    processContent->add(std::make_shared<cpptui::VerticalSpacer>());
-    processContent->add(
-            std::make_shared<cpptui::Label>(std::string(QuitHint())));
 
     auto processTab = std::make_shared<cpptui::Border>(
             cpptui::BorderStyle::Rounded);
@@ -40,6 +37,16 @@ std::shared_ptr<cpptui::Widget> BuildRootView(
     auto tabs = std::make_shared<cpptui::Tabs>();
     tabs->add_tab("System", systemTab);
     tabs->add_tab("Processes", processTab);
+    tabs->set_tab(
+        state.Tab() == ApplicationTab::System ? 0 : 1);
+    tabs->on_change =
+        [&state](int index)
+        {
+            state.SetTab(
+                index == 0
+                    ? ApplicationTab::System
+                    : ApplicationTab::Processes);
+        };
     return tabs;
 }
 

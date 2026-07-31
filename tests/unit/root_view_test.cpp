@@ -7,7 +7,7 @@
 
 TEST_CASE("The root view can be laid out and rendered")
 {
-    const tsm::AppState state;
+    tsm::AppState state;
     auto root = tsm::BuildRootView(state);
     REQUIRE(root);
 
@@ -31,7 +31,7 @@ TEST_CASE("The root view can be laid out and rendered")
 
 TEST_CASE("The top tabs switch between system and processes")
 {
-    const tsm::AppState state;
+    tsm::AppState state;
     auto tabs =
         std::dynamic_pointer_cast<cpptui::Tabs>(
             tsm::BuildRootView(state));
@@ -42,10 +42,12 @@ TEST_CASE("The top tabs switch between system and processes")
     next.key = ']';
     CHECK(tabs->on_event(next));
     CHECK(tabs->current_tab == 1);
+    CHECK(state.Tab() == tsm::ApplicationTab::Processes);
 
     cpptui::Event previous;
     previous.type = cpptui::EventType::Key;
     previous.key = '[';
     CHECK(tabs->on_event(previous));
     CHECK(tabs->current_tab == 0);
+    CHECK(state.Tab() == tsm::ApplicationTab::System);
 }
